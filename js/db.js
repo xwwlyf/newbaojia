@@ -8,6 +8,7 @@ window.db = (function () {
   const DB_VERSION = 1;
 
   let dbInstance = null;
+  let _cache = null;  // In-memory cache of all quotation_rows; null = not loaded
 
   // ── Private: Promisify IDBRequest ──
   function promisify(request) {
@@ -410,6 +411,78 @@ window.db = (function () {
     return fileBytes + estimatedRowBytes;
   }
 
+  // ── Public: Get all rows (for cache loading) ──
+  async function getAllRows() {
+    var db = await getDB();
+    return new Promise(function (resolve, reject) {
+      var tx = db.transaction('quotation_rows', 'readonly');
+      var store = tx.objectStore('quotation_rows');
+      var request = store.getAll();
+      request.onsuccess = function () {
+        resolve(request.result || []);
+      };
+      request.onerror = function (e) {
+        reject(e.target.error);
+      };
+    });
+  }
+
+  // ── Public: Load rows into memory cache ──
+  async function loadCache() {
+    try {
+      _cache = await getAllRows();
+    } catch (err) {
+      console.error('loadCache() failed:', err);
+      _cache = null;
+    }
+  }
+
+  // ── Public: Search in memory (synchronous, no IndexedDB) ──
+  function searchInMemory(query, fileIds) {
+    if (!_cache) return [];
+
+    var lowerQuery = query.toLowerCase().trim();
+    if (!lowerQuery) return [];
+
+    var shouldFilter = fileIds && fileIds.length > 0;
+    var results = [];
+
+    for (var i = 0; i < _cache.length; i++) {
+      var row = _cache[i];
+      var model = (row.model || '').toString().toLowerCase();
+
+      if (model.indexOf(lowerQuery) !== -1) {
+        if (!shouldFilter || fileIds.indexOf(row.file_id) !== -1) {
+          results.push(row);
+          continue;
+        }
+      }
+
+      var rowDataArr = row.row_data || [];
+      for (var j = 0; j < rowDataArr.length; j++) {
+        var cell = (rowDataArr[j] != null ? rowDataArr[j] : '').toString().toLowerCase();
+        if (cell.indexOf(lowerQuery) !== -1) {
+          if (!shouldFilter || fileIds.indexOf(row.file_id) !== -1) {
+            results.push(row);
+            break;
+          }
+        }
+      }
+    }
+
+    return results;
+  }
+
+  // ── Public: Refresh cache after writes (reload from IndexedDB) ──
+  async function refreshCache() {
+    try {
+      _cache = await getAllRows();
+    } catch (err) {
+      console.error('refreshCache() failed:', err);
+      _cache = null;
+    }
+  }
+
   // ── Public API ──
   return {
     init: init,
@@ -422,5 +495,9 @@ window.db = (function () {
     deleteFile: deleteFile,
     exportFile: exportFile,
     getStats: getStats,
+    getAllRows: getAllRows,
+    loadCache: loadCache,
+    searchInMemory: searchInMemory,
+    refreshCache: refreshCache,
   };
 })();

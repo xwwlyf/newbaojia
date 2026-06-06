@@ -284,6 +284,7 @@ window.AdminApp = (function () {
 
         // Save to DB
         await db.saveFile(result.fileRecord, result.rows);
+        await db.refreshCache();
 
         showProgress(true, '完成！', 100);
         await sleep(300);
@@ -514,9 +515,11 @@ window.AdminApp = (function () {
       var existing = await db.getFileByHash(pendingFileRecord.file_hash);
       if (existing) {
         await db.updateFile(existing.id, pendingFileRecord, pendingRows);
+        await db.refreshCache();
       } else {
         // Rare case: file deleted between check and now
         await db.saveFile(pendingFileRecord, pendingRows);
+        await db.refreshCache();
       }
 
       showProgress(true, '完成！', 100);
@@ -544,6 +547,7 @@ window.AdminApp = (function () {
   async function executeDelete(fileId, fileName) {
     try {
       await db.deleteFile(fileId);
+      await db.refreshCache();
       showToast('✅ 已删除：' + fileName, 'success');
       await refreshAll();
     } catch (err) {
@@ -583,6 +587,7 @@ window.AdminApp = (function () {
 
         showProgress(true, '正在保存...', 70);
         await db.updateFile(fileId, result.fileRecord, result.rows);
+        await db.refreshCache();
 
         showProgress(true, '完成！', 100);
         await sleep(300);
