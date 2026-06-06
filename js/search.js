@@ -24,6 +24,7 @@ window.SearchApp = (function () {
 
     try {
       await db.init();
+      await db.loadCache();
     } catch (err) {
       console.error('db.init() failed:', err);
       showEmptyState('数据库初始化失败', '请检查浏览器是否支持 IndexedDB。', false);
@@ -193,14 +194,8 @@ window.SearchApp = (function () {
     searchBtn.textContent = '搜索中...';
 
     try {
-      // Search each selected file
-      var allResults = [];
-      for (var i = 0; i < effectiveFileIds.length; i++) {
-        var fileResults = await db.search(query, effectiveFileIds[i]);
-        for (var j = 0; j < fileResults.length; j++) {
-          allResults.push(fileResults[j]);
-        }
-      }
+      // Search in memory cache (single synchronous call)
+      var allResults = db.searchInMemory(query, effectiveFileIds);
 
       if (allResults.length === 0) {
         showEmptyState('未找到匹配结果', '未找到匹配 "' + query + '" 的结果。', false);
