@@ -261,6 +261,11 @@ window.SearchApp = (function () {
       }
     }
 
+    // Warn if too many rows (still render with lazy loading)
+    if (totalHits > 1000) {
+      showToast('共找到 ' + totalHits + ' 条结果，请输入更精确的关键词缩小范围', 'warning', 5000);
+    }
+
     // Show summary
     resultsSummary.style.display = 'block';
     resultsCount.innerHTML = '共找到 <strong>' + totalHits + '</strong> 条结果';
@@ -362,18 +367,35 @@ window.SearchApp = (function () {
       catData.rows.length +
       ' 行</span>';
 
-    // Body
+    // Body (hidden by default)
     var body = document.createElement('div');
     body.className = 'result-category-body';
 
-    // Build table (lazily — we build it now but it's hidden until expand)
+    // Build table skeleton: thead filled, tbody EMPTY (lazy render on expand)
     var tableWrapper = document.createElement('div');
     tableWrapper.className = 'table-wrapper';
-    var table = buildDataTable(catData.header_data, catData.rows, query);
+    var table = document.createElement('table');
+    table.className = 'data-table';
+
+    var thead = document.createElement('thead');
+    var headerRow = document.createElement('tr');
+    for (var hi = 0; hi < catData.header_data.length; hi++) {
+      var th = document.createElement('th');
+      th.textContent = catData.header_data[hi] || '列' + (hi + 1);
+      headerRow.appendChild(th);
+    }
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+
+    var tbody = document.createElement('tbody');
+    table.appendChild(tbody);
     tableWrapper.appendChild(table);
     body.appendChild(tableWrapper);
 
-    // Toggle on click
+    // Lazy load state
+    var rowsLoaded = false;
+
+    // Toggle on click — lazy render on first expand
     header.addEventListener('click', function () {
       var icon = header.querySelector('.toggle-icon');
       var isExpanded = body.classList.contains('expanded');
@@ -381,6 +403,11 @@ window.SearchApp = (function () {
         body.classList.remove('expanded');
         icon.classList.remove('expanded');
       } else {
+        // Lazy load rows on first expand
+        if (!rowsLoaded) {
+          fillTableBody(tbody, catData.header_data, catData.rows, query);
+          rowsLoaded = true;
+        }
         body.classList.add('expanded');
         icon.classList.add('expanded');
       }
@@ -443,6 +470,36 @@ window.SearchApp = (function () {
     table.appendChild(tbody);
 
     return table;
+  }
+
+  // ── Fill table body lazily (dom-based, preserves dblclick handlers) ──
+  function fillTableBody(tbody, headerData, rows, query) {
+    for (var r = 0; r < rows.length; r++) {
+      var row = rows[r];
+      var tr = document.createElement('tr');
+
+      for (var c = 0; c < headerData.length; c++) {
+        var td = document.createElement('td');
+        var cellValue = row.row_data && c < row.row_data.length ? row.row_data[c] : '';
+        var cellStr = cellValue != null ? String(cellValue) : '';
+
+        var highlighted = highlightMatch(cellStr, query);
+        var formatted = formatCellText(highlighted, cellStr, 30, headerData[c] || '列' + (c + 1));
+
+        td.innerHTML = formatted;
+
+        if (cellStr.length > 30) {
+          td.addEventListener('dblclick', function (colName, fullText) {
+            return function () {
+              showCellDetail(colName, fullText);
+            };
+          }(headerData[c] || '列' + (c + 1), cellStr));
+        }
+
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    }
   }
 
   // ── Highlight Match ──
