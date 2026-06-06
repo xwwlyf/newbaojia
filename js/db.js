@@ -444,7 +444,7 @@ window.db = (function () {
     var lowerQuery = query.toLowerCase().trim();
     if (!lowerQuery) return [];
 
-    var shouldFilter = fileIds && fileIds.length > 0;
+    var fileIdSet = (fileIds && fileIds.length > 0) ? new Set(fileIds) : null;
     var results = [];
 
     for (var i = 0; i < _cache.length; i++) {
@@ -452,7 +452,7 @@ window.db = (function () {
       var model = (row.model || '').toString().toLowerCase();
 
       if (model.indexOf(lowerQuery) !== -1) {
-        if (!shouldFilter || fileIds.indexOf(row.file_id) !== -1) {
+        if (!fileIdSet || fileIdSet.has(row.file_id)) {
           results.push(row);
           continue;
         }
@@ -462,7 +462,7 @@ window.db = (function () {
       for (var j = 0; j < rowDataArr.length; j++) {
         var cell = (rowDataArr[j] != null ? rowDataArr[j] : '').toString().toLowerCase();
         if (cell.indexOf(lowerQuery) !== -1) {
-          if (!shouldFilter || fileIds.indexOf(row.file_id) !== -1) {
+          if (!fileIdSet || fileIdSet.has(row.file_id)) {
             results.push(row);
             break;
           }
