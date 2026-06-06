@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>报价查询系统</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <h1 class="app-title">🔍 报价查询系统</h1>
+      <nav class="app-nav">
+        <a href="admin.html">⚙️ 管理后台</a>
+      </nav>
+    </header>
+
+    <main id="search-page">
+      <!-- Search Panel -->
+      <section class="search-panel">
+        <div class="search-box">
+          <div class="search-input-wrapper">
+            <input type="text" id="search-input" placeholder="输入型号关键词，如 CC388A、388" autocomplete="off">
+          </div>
+          <button id="search-btn">搜索</button>
+        </div>
+
+        <!-- File Filters -->
+        <div class="file-filters" id="file-filters" style="display: none;">
+          <span class="filter-label">筛选文件：</span>
+          <div class="filter-pills" id="filter-pills"></div>
+          <button id="toggle-all">全选 / 取消</button>
+        </div>
+      </section>
+
+      <!-- Results Summary -->
+      <div class="results-summary" id="results-summary" style="display: none;">
+        <p id="results-count"></p>
+      </div>
+
+      <!-- Results Container -->
+      <div class="results-container" id="results-container"></div>
+
+      <!-- Empty State -->
+      <div class="empty-state" id="empty-state" style="display: none;">
+        <div class="empty-icon">📭</div>
+        <h3 id="empty-title">未找到匹配结果</h3>
+        <p id="empty-desc"></p>
+        <a href="admin.html" class="btn btn-primary" id="empty-action" style="display: none;">前往管理后台上传文件</a>
+      </div>
+
+      <!-- No Files Hint -->
+      <div class="no-files-hint" id="no-files-hint">
+        <p>还没有上传报价文件，请先前往 <a href="admin.html">管理后台</a> 上传。</p>
+      </div>
+    </main>
+  </div>
+
+  <!-- Cell Detail Modal -->
+  <div class="modal-overlay" id="cell-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title" id="cell-modal-title">列名</h3>
+        <button class="modal-close" id="cell-modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <pre class="cell-full-text" id="cell-full-text"></pre>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" id="cell-modal-btn-close">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container"></div>
+
+  <script src="js/db.js"></script>
+  <script src="js/search.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      SearchApp.init();
+    });
+  </script>
+</body>
+</html>

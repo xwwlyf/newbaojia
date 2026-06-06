@@ -1,0 +1,12 @@
+…或者在命令行创建一个新的仓库
+echo "# newbaojia" >> README.md
+git init
+git add README.md
+git commit -m "first commit"
+git branch -M main
+git remote add origin https://github.com/xwwlyf/newbaojia.git
+git push -u origin main
+…或者从命令行推送已有的仓库
+git remote add origin https://github.com/xwwlyf/newbaojia.git
+git branch -M main
+git push -u origin main

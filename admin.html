@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>报价管理后台</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <h1 class="app-title">📋 报价管理后台</h1>
+      <nav class="app-nav">
+        <a href="index.html">🔍 返回搜索</a>
+      </nav>
+    </header>
+
+    <main id="admin-page">
+      <!-- Stats Panel -->
+      <section class="stats-panel">
+        <div class="stat-card">
+          <div class="stat-icon">📄</div>
+          <div class="stat-content">
+            <span class="stat-value" id="stat-files">0</span>
+            <span class="stat-label">报价文件</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">📊</div>
+          <div class="stat-content">
+            <span class="stat-value" id="stat-rows">0</span>
+            <span class="stat-label">数据总行数</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">💾</div>
+          <div class="stat-content">
+            <span class="stat-value" id="stat-storage">0 KB</span>
+            <span class="stat-label">存储用量</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Upload Section -->
+      <section class="upload-section">
+        <h2>📤 上传报价文件</h2>
+        <div class="upload-zone" id="drop-zone">
+          <div class="upload-icon">☁️</div>
+          <p class="upload-text">点击上传或拖拽 .xlsx 文件到此处</p>
+          <p class="upload-hint">支持 .xlsx / .xls 格式</p>
+          <input type="file" id="file-input" accept=".xlsx,.xls" multiple>
+        </div>
+        <div class="upload-progress" id="upload-progress">
+          <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+          </div>
+          <p class="progress-text" id="progress-text">正在解析文件...</p>
+        </div>
+      </section>
+
+      <!-- File List Section -->
+      <section class="file-list-section">
+        <h2>📁 已上传文件</h2>
+        <div class="file-table-wrapper">
+          <table id="file-table">
+            <thead>
+              <tr>
+                <th>文件名</th>
+                <th>数据行数</th>
+                <th>分类数</th>
+                <th>上传时间</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="empty-row">
+                <td colspan="5">暂无报价文件，请上传。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Duplicate File Modal -->
+  <div class="modal-overlay" id="duplicate-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">⚠️ 文件已存在</h3>
+        <button class="modal-close" id="dup-modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p id="dup-message">该文件已经上传过，是否覆盖？</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" id="dup-btn-replace">覆盖</button>
+        <button class="btn btn-ghost" id="dup-btn-skip">跳过</button>
+        <button class="btn btn-ghost" id="dup-btn-cancel">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm Modal -->
+  <div class="modal-overlay" id="confirm-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">确认操作</h3>
+        <button class="modal-close" id="confirm-modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p id="confirm-message">确定要删除此文件吗？</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-danger" id="confirm-btn-yes">确定</button>
+        <button class="btn btn-ghost" id="confirm-btn-no">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container"></div>
+
+  <script src="js/db.js"></script>
+  <script src="js/admin.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      AdminApp.init();
+    });
+  </script>
+</body>
+</html>
