@@ -429,7 +429,7 @@ main {
   transition: max-height var(--transition-slow);
 }
 .result-file-body.expanded {
-  max-height: 99999px;
+  max-height: 5000px;
 }
 
 /* Category Panel */
@@ -491,8 +491,6 @@ main {
 }
 
 .data-table thead th {
-  position: sticky;
-  top: 0;
   background: var(--color-primary-light);
   padding: 10px 12px;
   text-align: left;

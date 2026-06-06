@@ -201,9 +201,9 @@ window.SearchApp = (function () {
         showEmptyState('未找到匹配结果', '未找到匹配 "' + query + '" 的结果。', false);
         hideResults();
       } else {
-        var grouped = groupResults(allResults, query);
+        var grouped = groupResults(allResults);
         hideEmptyState();
-        renderResults(grouped, query);
+        renderResults(grouped, query, allResults.length);
       }
     } catch (err) {
       console.error('Search error:', err);
@@ -215,13 +215,14 @@ window.SearchApp = (function () {
   }
 
   // ── Group Results ──
-  function groupResults(rows, query) {
-    // Sort rows for consistent output
-    rows.sort(function (a, b) {
-      if (a.file_name !== b.file_name) return a.file_name.localeCompare(b.file_name);
-      if (a.category_order !== b.category_order) return a.category_order - b.category_order;
-      return a.row_order - b.row_order;
-    });
+  function groupResults(rows) {
+    if (rows.length > 1) {
+      rows.sort(function (a, b) {
+        if (a.file_name !== b.file_name) return a.file_name.localeCompare(b.file_name);
+        if (a.category_order !== b.category_order) return a.category_order - b.category_order;
+        return a.row_order - b.row_order;
+      });
+    }
 
     var resultMap = {};
 
@@ -248,18 +249,8 @@ window.SearchApp = (function () {
   }
 
   // ── Render Results ──
-  function renderResults(grouped, query) {
-    var totalHits = 0;
+  function renderResults(grouped, query, totalHits) {
     var fileNames = Object.keys(grouped).sort();
-
-    // Calculate total
-    for (var fn = 0; fn < fileNames.length; fn++) {
-      var categories = grouped[fileNames[fn]];
-      var catNames = Object.keys(categories);
-      for (var cn = 0; cn < catNames.length; cn++) {
-        totalHits += categories[catNames[cn]].rows.length;
-      }
-    }
 
     // Warn if too many rows (still render with lazy loading)
     if (totalHits > 1000) {
@@ -418,62 +409,9 @@ window.SearchApp = (function () {
     return panel;
   }
 
-  function buildDataTable(headerData, rows, query) {
-    var table = document.createElement('table');
-    table.className = 'data-table';
-
-    // thead
-    var thead = document.createElement('thead');
-    var headerRow = document.createElement('tr');
-
-    for (var i = 0; i < headerData.length; i++) {
-      var th = document.createElement('th');
-      th.textContent = headerData[i] || '列' + (i + 1);
-      headerRow.appendChild(th);
-    }
-    thead.appendChild(headerRow);
-    table.appendChild(thead);
-
-    // tbody
-    var tbody = document.createElement('tbody');
-
-    for (var r = 0; r < rows.length; r++) {
-      var row = rows[r];
-      var tr = document.createElement('tr');
-
-      for (var c = 0; c < headerData.length; c++) {
-        var td = document.createElement('td');
-        var cellValue = row.row_data && c < row.row_data.length ? row.row_data[c] : '';
-        var cellStr = cellValue != null ? String(cellValue) : '';
-
-        // Highlight match
-        var highlighted = highlightMatch(cellStr, query);
-
-        // Truncate long text
-        var formatted = formatCellText(highlighted, cellStr, 30, headerData[c] || '列' + (c + 1));
-
-        td.innerHTML = formatted;
-
-        // Bind double-click for truncated cells
-        if (cellStr.length > 30) {
-          td.addEventListener('dblclick', function (colName, fullText) {
-            return function () {
-              showCellDetail(colName, fullText);
-            };
-          }(headerData[c] || '列' + (c + 1), cellStr));
-        }
-
-        tr.appendChild(td);
-      }
-      tbody.appendChild(tr);
-    }
-    table.appendChild(tbody);
-
-    return table;
-  }
-
   // ── Fill table body lazily (dom-based, preserves dblclick handlers) ──
   function fillTableBody(tbody, headerData, rows, query) {
+    var fragment = document.createDocumentFragment();
     for (var r = 0; r < rows.length; r++) {
       var row = rows[r];
       var tr = document.createElement('tr');
@@ -498,8 +436,9 @@ window.SearchApp = (function () {
 
         tr.appendChild(td);
       }
-      tbody.appendChild(tr);
+      fragment.appendChild(tr);
     }
+    tbody.appendChild(fragment);
   }
 
   // ── Highlight Match ──
@@ -616,9 +555,10 @@ window.SearchApp = (function () {
 
   // ── Utilities ──
   function escapeHtml(str) {
-    var div = document.createElement('div');
-    div.appendChild(document.createTextNode(str));
-    return div.innerHTML;
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
   }
 
   // ── Public API ──
